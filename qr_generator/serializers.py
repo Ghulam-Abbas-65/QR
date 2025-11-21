@@ -11,6 +11,7 @@ class UploadedFileSerializer(serializers.ModelSerializer):
 class QRCodeSerializer(serializers.ModelSerializer):
     uploaded_file = UploadedFileSerializer(read_only=True)
     scan_count = serializers.SerializerMethodField()
+    qr_image = serializers.SerializerMethodField()
     
     class Meta:
         model = QRCode
@@ -18,6 +19,12 @@ class QRCodeSerializer(serializers.ModelSerializer):
     
     def get_scan_count(self, obj):
         return obj.scans.count()
+    
+    def get_qr_image(self, obj):
+        request = self.context.get('request')
+        if obj.qr_image and request:
+            return request.build_absolute_uri(obj.qr_image.url)
+        return obj.qr_image.url if obj.qr_image else None
 
 
 class URLQRCreateSerializer(serializers.Serializer):

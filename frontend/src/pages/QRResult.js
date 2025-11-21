@@ -37,7 +37,7 @@ function QRResult() {
         <h2 className="section-title">Your QR Code is Ready!</h2>
 
         <img
-          src={`http://localhost:8000${qrCode.qr_image}`}
+          src={qrCode.qr_image}
           alt="Generated QR Code"
           style={{
             maxWidth: '400px',
@@ -45,6 +45,10 @@ function QRResult() {
             border: '3px solid #667eea',
             borderRadius: '12px',
             margin: '20px 0',
+          }}
+          onError={(e) => {
+            console.error('Image failed to load:', qrCode.qr_image);
+            e.target.style.display = 'none';
           }}
         />
 

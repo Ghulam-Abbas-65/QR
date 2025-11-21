@@ -48,6 +48,10 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 
+# Allow credentials and expose headers for media files
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True  # For development only - allows media files to load
+
 # REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_PARSER_CLASSES': [

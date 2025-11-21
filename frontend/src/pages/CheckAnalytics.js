@@ -76,13 +76,16 @@ function CheckAnalytics() {
             >
               <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flex: 1 }}>
                 <img
-                  src={`http://localhost:8000${qr.qr_image}`}
+                  src={qr.qr_image}
                   alt="QR Code"
                   style={{
                     width: '80px',
                     height: '80px',
                     borderRadius: '8px',
                     border: '2px solid #667eea',
+                  }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
                   }}
                 />
                 <div style={{ flex: 1 }}>
