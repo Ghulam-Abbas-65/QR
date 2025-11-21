@@ -1,0 +1,119 @@
+.App {
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  color: #333;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 10px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+  width: 100%;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  margin-top: 10px;
+}
+
+.info-box {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.info-box p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.info-box strong {
+  color: #333;
+}
+
+.error {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #f5c6cb;
+}
+
+.success {
+  background: #d4edda;
+  color: #155724;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #c3e6cb;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #667eea;
+  font-size: 1.2rem;
+}

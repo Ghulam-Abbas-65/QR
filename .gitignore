@@ -8,6 +8,11 @@ db.sqlite3
 media/
 *.log
 
+# React
+frontend/node_modules/
+frontend/build/
+frontend/.env.local
+
 # IDE
 .vscode/
 .idea/

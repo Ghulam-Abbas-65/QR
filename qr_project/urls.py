@@ -8,7 +8,8 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('qr_generator.urls')),
+    path('api/', include('qr_generator.api_urls')),  # API endpoints for React
+    path('', include('qr_generator.urls')),  # Keep old URLs for file downloads
 ]
 
 # Serve media files in development
