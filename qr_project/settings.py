@@ -63,10 +63,23 @@ WSGI_APPLICATION = 'qr_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# SQLite (default - for development)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+# PostgreSQL
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'qr_database',
+        'USER': 'postgres',
+        'PASSWORD': '12345678',  # Change this to your PostgreSQL password
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
