@@ -1,0 +1,348 @@
+{% extends 'qr_generator/base.html' %}
+
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 class="section-title">📊 Analytics Dashboard</h2>
+    
+    <div class="info-box" style="margin-bottom: 20px;">
+        <p><strong>QR Code Type:</strong> {{ qr_code.get_qr_type_display }}</p>
+        {% if qr_code.qr_type == 'file' %}
+            <p><strong>File:</strong> {{ qr_code.uploaded_file.original_filename }}</p>
+        {% else %}
+            <p><strong>URL:</strong> {{ qr_code.content }}</p>
+        {% endif %}
+        <p><strong>Created:</strong> {{ qr_code.created_at|date:"F d, Y H:i" }}</p>
+    </div>
+    
+    <!-- Filters -->
+    <div class="filters-section">
+        <h3>🔍 Filter Analytics</h3>
+        <form method="get" class="filters-form">
+            <div class="filter-grid">
+                <div class="filter-item">
+                    <label for="country">Country</label>
+                    <select name="country" id="country" class="form-control">
+                        <option value="">All Countries</option>
+                        {% for country in filter_options.countries %}
+                            <option value="{{ country }}" {% if active_filters.country == country %}selected{% endif %}>
+                                {{ country }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-item">
+                    <label for="city">City</label>
+                    <select name="city" id="city" class="form-control">
+                        <option value="">All Cities</option>
+                        {% for city in filter_options.cities %}
+                            <option value="{{ city }}" {% if active_filters.city == city %}selected{% endif %}>
+                                {{ city }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-item">
+                    <label for="device">Device</label>
+                    <select name="device" id="device" class="form-control">
+                        <option value="">All Devices</option>
+                        {% for device in filter_options.devices %}
+                            <option value="{{ device }}" {% if active_filters.device == device %}selected{% endif %}>
+                                {{ device }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-item">
+                    <label for="browser">Browser</label>
+                    <select name="browser" id="browser" class="form-control">
+                        <option value="">All Browsers</option>
+                        {% for browser in filter_options.browsers %}
+                            <option value="{{ browser }}" {% if active_filters.browser == browser %}selected{% endif %}>
+                                {{ browser }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-actions">
+                <button type="submit" class="btn" style="width: auto; padding: 10px 30px;">Apply Filters</button>
+                <a href="{% url 'analytics_dashboard' qr_code.id %}" class="btn btn-secondary" style="width: auto; padding: 10px 30px;">Clear Filters</a>
+            </div>
+        </form>
+        
+        {% if active_filters.country or active_filters.city or active_filters.device or active_filters.browser %}
+            <div class="active-filters">
+                <strong>Active Filters:</strong>
+                {% if active_filters.country %}<span class="filter-badge">Country: {{ active_filters.country }}</span>{% endif %}
+                {% if active_filters.city %}<span class="filter-badge">City: {{ active_filters.city }}</span>{% endif %}
+                {% if active_filters.device %}<span class="filter-badge">Device: {{ active_filters.device }}</span>{% endif %}
+                {% if active_filters.browser %}<span class="filter-badge">Browser: {{ active_filters.browser }}</span>{% endif %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Overview Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_scans }}</div>
+            <div class="stat-label">Total Scans</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.unique_users }}</div>
+            <div class="stat-label">Unique Users</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.countries|length }}</div>
+            <div class="stat-label">Countries</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.cities|length }}</div>
+            <div class="stat-label">Cities</div>
+        </div>
+    </div>
+    
+    <!-- Countries -->
+    <div class="analytics-section">
+        <h3>🌍 Countries ({{ stats.countries|length }})</h3>
+        <div class="data-list">
+            {% for item in stats.countries %}
+                <div class="data-item">
+                    <span class="data-label">{{ item.country }}</span>
+                    <span class="data-value">{{ item.count }}</span>
+                </div>
+            {% empty %}
+                <p style="color: #999;">No data yet</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Cities -->
+    <div class="analytics-section">
+        <h3>🏙️ Cities ({{ stats.cities|length }})</h3>
+        <div class="data-list">
+            {% for item in stats.cities %}
+                <div class="data-item">
+                    <span class="data-label">{{ item.city }}, {{ item.country }}</span>
+                    <span class="data-value">{{ item.count }}</span>
+                </div>
+            {% empty %}
+                <p style="color: #999;">No data yet</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Devices -->
+    <div class="analytics-section">
+        <h3>📱 Device Types ({{ stats.devices|length }})</h3>
+        <div class="data-list">
+            {% for item in stats.devices %}
+                <div class="data-item">
+                    <span class="data-label">{{ item.device_type }}</span>
+                    <span class="data-value">{{ item.count }}</span>
+                </div>
+            {% empty %}
+                <p style="color: #999;">No data yet</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Browsers -->
+    <div class="analytics-section">
+        <h3>🌐 Browsers ({{ stats.browsers|length }})</h3>
+        <div class="data-list">
+            {% for item in stats.browsers %}
+                <div class="data-item">
+                    <span class="data-label">{{ item.browser }}</span>
+                    <span class="data-value">{{ item.count }}</span>
+                </div>
+            {% empty %}
+                <p style="color: #999;">No data yet</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Time Distribution -->
+    <div class="analytics-section">
+        <h3>🕐 Scans by Hour (24)</h3>
+        <div class="data-list">
+            {% for item in stats.hourly_distribution %}
+                <div class="data-item">
+                    <span class="data-label">{{ item.hour }}:00</span>
+                    <span class="data-value">{{ item.count }}</span>
+                </div>
+            {% empty %}
+                <p style="color: #999;">No data yet</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Recent Scans -->
+    <div class="analytics-section">
+        <h3>🕒 Recent Scans</h3>
+        <div class="recent-scans">
+            {% for scan in stats.recent_scans %}
+                <div class="scan-item">
+                    <div>
+                        <strong>{{ scan.city }}, {{ scan.country }}</strong>
+                        <span style="color: #999; margin-left: 10px;">{{ scan.device_type }}</span>
+                        <span style="color: #999; margin-left: 10px;">{{ scan.browser }}</span>
+                    </div>
+                    <div style="font-size: 0.9em; color: #666;">
+                        {{ scan.scanned_at|date:"M d, Y H:i" }}
+                    </div>
+                </div>
+            {% empty %}
+                <p style="color: #999;">No scans yet</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <a href="{% url 'qr_result' qr_code.id %}" class="btn btn-secondary" style="display: inline-block; width: auto; margin-top: 20px;">
+        Back to QR Code
+    </a>
+    
+    <a href="{% url 'home' %}" class="btn btn-secondary" style="display: inline-block; width: auto;">
+        Home
+    </a>
+</div>
+
+<style>
+    .filters-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+    }
+    
+    .filters-section h3 {
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+        color: #333;
+    }
+    
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .filter-item label {
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+    
+    .filter-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .active-filters {
+        margin-top: 15px;
+        padding: 10px;
+        background: white;
+        border-radius: 8px;
+    }
+    
+    .filter-badge {
+        display: inline-block;
+        background: #667eea;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        margin-right: 8px;
+        margin-top: 5px;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    .analytics-section {
+        margin: 30px 0;
+    }
+    
+    .analytics-section h3 {
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+        color: #333;
+        border-bottom: 2px solid #e0e0e0;
+        padding-bottom: 10px;
+    }
+    
+    .data-list {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+    }
+    
+    .data-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .data-item:last-child {
+        border-bottom: none;
+    }
+    
+    .data-label {
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .data-value {
+        color: #667eea;
+        font-weight: 600;
+    }
+    
+    .recent-scans {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+    }
+    
+    .scan-item {
+        padding: 12px;
+        background: white;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        border-left: 3px solid #667eea;
+    }
+    
+    .scan-item:last-child {
+        margin-bottom: 0;
+    }
+</style>
+{% endblock %}

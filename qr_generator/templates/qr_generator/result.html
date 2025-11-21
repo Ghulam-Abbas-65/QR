@@ -1,0 +1,71 @@
+{% extends 'qr_generator/base.html' %}
+
+{% block title %}QR Code Result{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="qr-result">
+        <h2 class="section-title">Your QR Code is Ready!</h2>
+        
+        <img src="{{ qr_code.qr_image.url }}" alt="Generated QR Code">
+        
+        <div class="info-box">
+            <p><strong>Type:</strong> {{ qr_code.get_qr_type_display }}</p>
+            
+            {% if qr_code.qr_type == 'url' %}
+                <p><strong>URL:</strong> {{ qr_code.content }}</p>
+            {% else %}
+                <p><strong>File:</strong> {{ qr_code.uploaded_file.original_filename }}</p>
+                <p style="color: #28a745; margin-top: 10px;">✓ File is accessible via secure random link (completely hidden)</p>
+                <p style="color: #666; font-size: 0.9em;">The QR code contains a random UUID - no file path is exposed</p>
+            {% endif %}
+            
+            <p><strong>Created:</strong> {{ qr_code.created_at|date:"F d, Y H:i" }}</p>
+        </div>
+        
+        <div class="download-section" style="margin-top: 20px;">
+            <h3 style="font-size: 1.1rem; margin-bottom: 10px; color: #333;">Download QR Code</h3>
+            <div class="download-buttons">
+                <a href="{% url 'download_qr' qr_code.id 'png' %}" class="btn-download">PNG</a>
+                <a href="{% url 'download_qr' qr_code.id 'jpg' %}" class="btn-download">JPG</a>
+                <a href="{% url 'download_qr' qr_code.id 'jpeg' %}" class="btn-download">JPEG</a>
+                <a href="{% url 'download_qr' qr_code.id 'webp' %}" class="btn-download">WEBP</a>
+                <a href="{% url 'download_qr' qr_code.id 'bmp' %}" class="btn-download">BMP</a>
+                <a href="{% url 'download_qr' qr_code.id 'svg' %}" class="btn-download">SVG</a>
+            </div>
+        </div>
+        
+        <style>
+            .download-buttons {
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .btn-download {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 10px 20px;
+                border-radius: 8px;
+                text-decoration: none;
+                font-weight: 600;
+                transition: transform 0.2s;
+                display: inline-block;
+            }
+            .btn-download:hover {
+                transform: translateY(-2px);
+            }
+        </style>
+        
+        <a href="{% url 'home' %}" class="btn btn-secondary" style="display: inline-block; width: auto;">
+            Generate Another
+        </a>
+        
+        {% if qr_code.qr_type == 'file' %}
+        <a href="{% url 'analytics_dashboard' qr_code.id %}" class="btn" style="display: inline-block; width: auto; background: #28a745;">
+            📊 View Analytics
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

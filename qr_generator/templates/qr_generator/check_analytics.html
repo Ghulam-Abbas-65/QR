@@ -1,0 +1,131 @@
+{% extends 'qr_generator/base.html' %}
+
+{% block title %}Check QR Analytics{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 class="section-title">📊 Check QR Code Analytics</h2>
+    
+    <p style="color: #666; margin-bottom: 20px;">
+        Search for your QR code by ID, filename, or URL to view its analytics.
+    </p>
+    
+    <form method="get" style="margin-bottom: 30px;">
+        <div class="form-group">
+            <label for="search">Search QR Codes</label>
+            <input 
+                type="text" 
+                name="search" 
+                id="search"
+                class="form-control" 
+                placeholder="Enter QR ID, filename, or URL..."
+                value="{{ search_query }}"
+            >
+        </div>
+        <button type="submit" class="btn">Search</button>
+    </form>
+    
+    {% if qr_codes %}
+        <div class="qr-list">
+            <h3 style="margin-bottom: 15px; color: #333;">
+                {% if search_query %}Search Results{% else %}Recent QR Codes{% endif %}
+            </h3>
+            
+            {% for qr in qr_codes %}
+                <div class="qr-item">
+                    <div class="qr-item-content">
+                        <div class="qr-item-image">
+                            <img src="{{ qr.qr_image.url }}" alt="QR Code">
+                        </div>
+                        <div class="qr-item-details">
+                            <div><strong>ID:</strong> {{ qr.id }}</div>
+                            <div><strong>Type:</strong> {{ qr.get_qr_type_display }}</div>
+                            {% if qr.qr_type == 'file' %}
+                                <div><strong>File:</strong> {{ qr.uploaded_file.original_filename }}</div>
+                            {% else %}
+                                <div><strong>URL:</strong> {{ qr.content|truncatechars:50 }}</div>
+                            {% endif %}
+                            <div style="color: #999; font-size: 0.9em;">
+                                Created: {{ qr.created_at|date:"M d, Y H:i" }}
+                            </div>
+                            <div style="color: #667eea; font-weight: 600; margin-top: 5px;">
+                                Total Scans: {{ qr.scans.count }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="qr-item-actions">
+                        {% if qr.qr_type == 'file' %}
+                            <a href="{% url 'analytics_dashboard' qr.id %}" class="btn" style="width: auto; padding: 8px 20px; font-size: 0.9rem;">
+                                View Analytics
+                            </a>
+                        {% else %}
+                            <span style="color: #999; font-size: 0.9em;">No analytics for URL QR codes</span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="info-box">
+            <p style="text-align: center; color: #999;">
+                {% if search_query %}
+                    No QR codes found matching "{{ search_query }}"
+                {% else %}
+                    No QR codes generated yet. Create one first!
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+    
+    <div class="info-box" style="margin-top: 30px;">
+        <h3 style="margin-bottom: 10px;">💡 Tips:</h3>
+        <ul style="margin-left: 20px; color: #666;">
+            <li>Search by QR code ID (e.g., "1", "2", "3")</li>
+            <li>Search by filename (e.g., "document.pdf")</li>
+            <li>Search by URL content</li>
+            <li>Leave blank to see recent QR codes</li>
+        </ul>
+        <p style="color: #999; margin-top: 15px; font-size: 0.9em;">
+            <strong>Note:</strong> Only file-based QR codes have analytics tracking.
+        </p>
+    </div>
+    
+    <a href="{% url 'home' %}" class="btn btn-secondary" style="display: inline-block; width: auto; margin-top: 20px;">
+        Back to Home
+    </a>
+</div>
+
+<style>
+    .qr-list { margin: 20px 0; }
+    .qr-item {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 2px solid #e0e0e0;
+        transition: all 0.3s;
+    }
+    .qr-item:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+    }
+    .qr-item-content {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        flex: 1;
+    }
+    .qr-item-image img {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        border: 2px solid #667eea;
+    }
+    .qr-item-details { flex: 1; }
+    .qr-item-details > div { margin: 5px 0; }
+    .qr-item-actions { margin-left: 20px; }
+</style>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'qr_generator/base.html' %}
+
+{% block content %}
+<div class="card">
+    <h2 class="section-title">Generate QR from URL</h2>
+    <form method="post" action="{% url 'generate_url_qr' %}">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ url_form.url.label_tag }}
+            {{ url_form.url }}
+        </div>
+        <button type="submit" class="btn">Generate QR Code</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2 class="section-title">Generate QR from File</h2>
+    <form method="post" action="{% url 'generate_file_qr' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ file_form.file.label_tag }}
+            {{ file_form.file }}
+        </div>
+        <button type="submit" class="btn">Generate QR Code</button>
+    </form>
+    <div class="info-box">
+        <p><strong>Note:</strong> When you upload a file, a secure random link will be generated. The actual file path will not be exposed to users.</p>
+    </div>
+</div>
+{% endblock %}
