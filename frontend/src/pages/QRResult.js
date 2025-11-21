@@ -24,7 +24,8 @@ function QRResult() {
   };
 
   const downloadQR = (format) => {
-    window.open(`http://localhost:8000/download-qr/${id}/${format}/`, '_blank');
+    const apiUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:8000';
+    window.open(`${apiUrl}/download-qr/${id}/${format}/`, '_blank');
   };
 
   if (loading) return <div className="loading">Loading...</div>;
