@@ -52,6 +52,7 @@ CORS_ALLOWED_ORIGINS = os.environ.get(
 
 # Allow credentials and expose headers for media files
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins for production
 
 # REST Framework settings
 REST_FRAMEWORK = {
