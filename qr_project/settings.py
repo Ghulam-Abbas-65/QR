@@ -3,7 +3,6 @@ Django settings for qr_project project.
 """
 
 import os
-import dj_database_url
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -87,26 +86,13 @@ WSGI_APPLICATION = 'qr_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Use DATABASE_URL from environment (Render provides this)
-if os.environ.get('DATABASE_URL'):
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600
-        )
+# Use SQLite for simplicity (works everywhere)
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-else:
-    # Local PostgreSQL
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'qr_database',
-            'USER': 'postgres',
-            'PASSWORD': '12345678',
-            'HOST': 'localhost',
-            'PORT': '5432',
-        }
-    }
+}
 
 
 # Password validation
