@@ -105,7 +105,7 @@ class ScanAnalytics(models.Model):
             'devices': scans.values('device_type').annotate(count=Count('device_type')).order_by('-count'),
             'browsers': scans.values('browser').annotate(count=Count('browser')).order_by('-count'),
             'hourly_distribution': scans.extra(
-                select={'hour': 'EXTRACT(hour FROM scanned_at)'}
+                select={'hour': "strftime('%%H', scanned_at)"}
             ).values('hour').annotate(count=Count('id')).order_by('hour'),
             'referrers': scans.values('referrer').annotate(count=Count('referrer')).order_by('-count'),
             'recent_scans': scans[:10],

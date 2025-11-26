@@ -112,37 +112,40 @@ def qr_code_list_api(request):
 @api_view(['GET'])
 def analytics_api(request, qr_id):
     """Get analytics for a QR code with optional filters"""
-    qr_code = get_object_or_404(QRCode, id=qr_id)
-    
-    # Get filter parameters
-    country = request.GET.get('country', '')
-    city = request.GET.get('city', '')
-    device = request.GET.get('device', '')
-    browser = request.GET.get('browser', '')
-    
-    # Get filtered stats
-    stats = ScanAnalytics.get_stats_for_qr(qr_code, country, city, device, browser)
-    
-    # Get filter options
-    all_scans = ScanAnalytics.objects.filter(qr_code=qr_code)
-    filter_options = {
-        'countries': list(all_scans.values_list('country', flat=True).distinct().order_by('country')),
-        'cities': list(all_scans.values_list('city', flat=True).distinct().order_by('city')),
-        'devices': list(all_scans.values_list('device_type', flat=True).distinct().order_by('device_type')),
-        'browsers': list(all_scans.values_list('browser', flat=True).distinct().order_by('browser')),
-    }
-    
-    # Convert QuerySets to lists for JSON serialization
-    stats['countries'] = list(stats['countries'])
-    stats['cities'] = list(stats['cities'])
-    stats['devices'] = list(stats['devices'])
-    stats['browsers'] = list(stats['browsers'])
-    stats['hourly_distribution'] = list(stats['hourly_distribution'])
-    stats['referrers'] = list(stats['referrers'])
-    stats['recent_scans'] = ScanAnalyticsSerializer(stats['recent_scans'], many=True).data
-    
-    return Response({
-        'qr_code': QRCodeSerializer(qr_code, context={'request': request}).data,
-        'stats': stats,
-        'filter_options': filter_options,
-    })
+    try:
+        qr_code = get_object_or_404(QRCode, id=qr_id)
+        
+        # Get filter parameters
+        country = request.GET.get('country', '')
+        city = request.GET.get('city', '')
+        device = request.GET.get('device', '')
+        browser = request.GET.get('browser', '')
+        
+        # Get filtered stats
+        stats = ScanAnalytics.get_stats_for_qr(qr_code, country, city, device, browser)
+        
+        # Get filter options
+        all_scans = ScanAnalytics.objects.filter(qr_code=qr_code)
+        filter_options = {
+            'countries': list(all_scans.values_list('country', flat=True).distinct().order_by('country')),
+            'cities': list(all_scans.values_list('city', flat=True).distinct().order_by('city')),
+            'devices': list(all_scans.values_list('device_type', flat=True).distinct().order_by('device_type')),
+            'browsers': list(all_scans.values_list('browser', flat=True).distinct().order_by('browser')),
+        }
+        
+        # Convert QuerySets to lists for JSON serialization
+        stats['countries'] = list(stats['countries'])
+        stats['cities'] = list(stats['cities'])
+        stats['devices'] = list(stats['devices'])
+        stats['browsers'] = list(stats['browsers'])
+        stats['hourly_distribution'] = list(stats['hourly_distribution'])
+        stats['referrers'] = list(stats['referrers'])
+        stats['recent_scans'] = ScanAnalyticsSerializer(stats['recent_scans'], many=True).data
+        
+        return Response({
+            'qr_code': QRCodeSerializer(qr_code, context={'request': request}).data,
+            'stats': stats,
+            'filter_options': filter_options,
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
