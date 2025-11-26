@@ -24,8 +24,10 @@ function QRResult() {
   };
 
   const downloadQR = (format) => {
-    const apiUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:8000';
-    window.open(`${apiUrl}/download-qr/${id}/${format}/`, '_blank');
+    const baseUrl = window.location.hostname === 'localhost' 
+      ? 'http://localhost:8000' 
+      : 'https://ghulam.pythonanywhere.com';
+    window.open(`${baseUrl}/download-qr/${id}/${format}/`, '_blank');
   };
 
   if (loading) return <div className="loading">Loading...</div>;
