@@ -2,10 +2,12 @@ import uuid
 from django.db import models
 from django.db.models import Count, Q
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 
 class UploadedFile(models.Model):
     """Store uploaded files with secure random access tokens"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='uploaded_files')
     file = models.FileField(upload_to='uploads/')
     token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     original_filename = models.CharField(max_length=255)
@@ -25,6 +27,7 @@ class QRCode(models.Model):
         ('file', 'File'),
     ]
     
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='qr_codes')
     qr_type = models.CharField(max_length=10, choices=QR_TYPE_CHOICES)
     content = models.TextField()  # URL or file token
     qr_image = models.ImageField(upload_to='qr_codes/')

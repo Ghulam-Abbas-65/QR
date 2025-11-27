@@ -1,5 +1,6 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, action
+from rest_framework.decorators import api_view, action, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -25,6 +26,7 @@ def generate_url_qr_api(request):
         
         # Save to database
         qr_code = QRCode.objects.create(
+            user=request.user,
             qr_type='url',
             content=url,
         )
@@ -52,6 +54,7 @@ def generate_file_qr_api(request):
         
         # Save the uploaded file with secure token
         file_obj = UploadedFile.objects.create(
+            user=request.user,
             file=uploaded_file,
             original_filename=uploaded_file.name
         )
@@ -66,6 +69,7 @@ def generate_file_qr_api(request):
         
         # Save QR code to database
         qr_code = QRCode.objects.create(
+            user=request.user,
             qr_type='file',
             content=download_url,
             uploaded_file=file_obj
@@ -87,7 +91,7 @@ def generate_file_qr_api(request):
 @api_view(['GET'])
 def qr_code_detail_api(request, qr_id):
     """Get QR code details"""
-    qr_code = get_object_or_404(QRCode, id=qr_id)
+    qr_code = get_object_or_404(QRCode, id=qr_id, user=request.user)
     return Response(QRCodeSerializer(qr_code, context={'request': request}).data)
 
 
@@ -99,12 +103,16 @@ def qr_code_list_api(request):
     if search:
         from django.db.models import Q
         qr_codes = QRCode.objects.filter(
+            user=request.user
+        ).filter(
             Q(id__icontains=search) |
             Q(content__icontains=search) |
             Q(uploaded_file__original_filename__icontains=search)
         ).select_related('uploaded_file').order_by('-created_at')[:20]
     else:
-        qr_codes = QRCode.objects.filter(qr_type='file').select_related('uploaded_file').order_by('-created_at')[:10]
+        qr_codes = QRCode.objects.filter(
+            user=request.user
+        ).select_related('uploaded_file').order_by('-created_at')[:10]
     
     return Response(QRCodeSerializer(qr_codes, many=True, context={'request': request}).data)
 
@@ -113,7 +121,7 @@ def qr_code_list_api(request):
 def analytics_api(request, qr_id):
     """Get analytics for a QR code with optional filters"""
     try:
-        qr_code = get_object_or_404(QRCode, id=qr_id)
+        qr_code = get_object_or_404(QRCode, id=qr_id, user=request.user)
         
         # Get filter parameters
         country = request.GET.get('country', '')
