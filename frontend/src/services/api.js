@@ -8,6 +8,20 @@ const api = axios.create({
   },
 });
 
+// Add token to all requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Token ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 export const generateURLQR = async (url) => {
   const response = await api.post('/generate/url/', { url });
   return response.data;
