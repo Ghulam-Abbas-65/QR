@@ -21,3 +21,6 @@ frontend/.env.production
 # OS
 .DS_Store
 Thumbs.db
+
+
+.env

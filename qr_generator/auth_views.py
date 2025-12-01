@@ -6,33 +6,47 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.db import IntegrityError
+from django.core.mail import send_mail
+from django.conf import settings
 from .auth_serializers import UserRegistrationSerializer, UserLoginSerializer, UserSerializer
+from .models import EmailVerification
 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_user(request):
-    """Register a new user"""
+    """Register a new user (inactive until email verified)"""
     serializer = UserRegistrationSerializer(data=request.data)
     
     if serializer.is_valid():
         try:
-            # Create user
+            # Create user as inactive
             user = User.objects.create_user(
                 username=serializer.validated_data['username'],
                 email=serializer.validated_data['email'],
                 password=serializer.validated_data['password'],
                 first_name=serializer.validated_data.get('first_name', ''),
-                last_name=serializer.validated_data.get('last_name', '')
+                last_name=serializer.validated_data.get('last_name', ''),
+                is_active=False  # User must verify email first
             )
             
-            # Create token for the user
-            token, created = Token.objects.get_or_create(user=user)
+            # Create verification code
+            code = EmailVerification.generate_code()
+            EmailVerification.objects.create(user=user, code=code)
+            
+            # Send verification email
+            send_mail(
+                subject='Verify your email - QR Generator',
+                message=f'Your verification code is: {code}\n\nThis code expires in 10 minutes.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
             
             return Response({
-                'message': 'User registered successfully',
-                'user': UserSerializer(user).data,
-                'token': token.key
+                'message': 'Registration successful. Please check your email for verification code.',
+                'email': user.email,
+                'requires_verification': True
             }, status=status.HTTP_201_CREATED)
             
         except IntegrityError:
@@ -41,6 +55,96 @@ def register_user(request):
             }, status=status.HTTP_400_BAD_REQUEST)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_email(request):
+    """Verify email with code"""
+    email = request.data.get('email')
+    code = request.data.get('code')
+    
+    if not email or not code:
+        return Response({
+            'error': 'Email and code are required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        user = User.objects.get(email=email)
+        verification = EmailVerification.objects.get(user=user)
+        
+        if verification.is_expired():
+            return Response({
+                'error': 'Verification code has expired. Please request a new one.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if verification.code != code:
+            return Response({
+                'error': 'Invalid verification code'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Activate user
+        user.is_active = True
+        user.save()
+        
+        # Delete verification record
+        verification.delete()
+        
+        # Create token
+        token, _ = Token.objects.get_or_create(user=user)
+        
+        return Response({
+            'message': 'Email verified successfully',
+            'user': UserSerializer(user).data,
+            'token': token.key
+        }, status=status.HTTP_200_OK)
+        
+    except User.DoesNotExist:
+        return Response({
+            'error': 'User not found'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    except EmailVerification.DoesNotExist:
+        return Response({
+            'error': 'No pending verification for this email'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def resend_verification(request):
+    """Resend verification code"""
+    email = request.data.get('email')
+    
+    if not email:
+        return Response({
+            'error': 'Email is required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        user = User.objects.get(email=email, is_active=False)
+        
+        # Delete old verification and create new one
+        EmailVerification.objects.filter(user=user).delete()
+        code = EmailVerification.generate_code()
+        EmailVerification.objects.create(user=user, code=code)
+        
+        # Send new code
+        send_mail(
+            subject='Verify your email - QR Generator',
+            message=f'Your new verification code is: {code}\n\nThis code expires in 10 minutes.',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+        
+        return Response({
+            'message': 'Verification code sent'
+        }, status=status.HTTP_200_OK)
+        
+    except User.DoesNotExist:
+        return Response({
+            'error': 'No pending verification for this email'
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])

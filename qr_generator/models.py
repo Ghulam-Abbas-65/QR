@@ -1,8 +1,29 @@
 import uuid
+import random
+import string
 from django.db import models
 from django.db.models import Count, Q
 from django.utils import timezone
 from django.contrib.auth.models import User
+
+
+class EmailVerification(models.Model):
+    """Store email verification codes"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='email_verification')
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def is_expired(self):
+        """Code expires after 10 minutes"""
+        return timezone.now() > self.created_at + timezone.timedelta(minutes=10)
+    
+    @staticmethod
+    def generate_code():
+        """Generate a 6-digit code"""
+        return ''.join(random.choices(string.digits, k=6))
+    
+    def __str__(self):
+        return f"Verification for {self.user.email}"
 
 
 class UploadedFile(models.Model):

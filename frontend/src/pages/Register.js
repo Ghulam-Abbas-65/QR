@@ -18,7 +18,12 @@ const Register = () => {
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
   
-  const { register } = useAuth();
+  // Verification state
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [pendingEmail, setPendingEmail] = useState('');
+  
+  const { register, verifyEmail } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -28,7 +33,6 @@ const Register = () => {
       [name]: value
     }));
     
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -132,8 +136,14 @@ const Register = () => {
     setErrors({});
     
     try {
-      await register(formData);
-      navigate('/', { replace: true });
+      const response = await register(formData);
+      
+      if (response.requires_verification) {
+        setPendingEmail(response.email);
+        setShowVerification(true);
+      } else if (response.token) {
+        navigate('/', { replace: true });
+      }
     } catch (error) {
       if (error.username) {
         setErrors(prev => ({ ...prev, username: error.username[0] }));
@@ -154,6 +164,82 @@ const Register = () => {
       setLoading(false);
     }
   };
+
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrors({});
+    
+    try {
+      await verifyEmail(pendingEmail, verificationCode);
+      navigate('/', { replace: true });
+    } catch (error) {
+      setErrors({ general: error.error || 'Verification failed' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    setLoading(true);
+    try {
+      await authService.resendVerification(pendingEmail);
+      setErrors({ general: 'New code sent to your email' });
+    } catch (error) {
+      setErrors({ general: error.error || 'Failed to resend code' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Verification form
+  if (showVerification) {
+    return (
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="auth-header">
+            <h1>Verify Your Email</h1>
+            <p>We sent a 6-digit code to <strong>{pendingEmail}</strong></p>
+          </div>
+          
+          <form onSubmit={handleVerify} className="auth-form">
+            {errors.general && (
+              <div className={errors.general.includes('sent') ? 'success-message' : 'error-message general-error'}>
+                {errors.general}
+              </div>
+            )}
+            
+            <div className="form-group">
+              <label htmlFor="code">Verification Code</label>
+              <input
+                type="text"
+                id="code"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="Enter 6-digit code"
+                maxLength={6}
+                className="verification-input"
+                autoFocus
+              />
+            </div>
+            
+            <button type="submit" className="auth-button" disabled={loading || verificationCode.length !== 6}>
+              {loading ? 'Verifying...' : 'Verify Email'}
+            </button>
+          </form>
+          
+          <div className="auth-footer">
+            <p>
+              Didn't receive the code?{' '}
+              <button onClick={handleResendCode} className="auth-link-button" disabled={loading}>
+                Resend Code
+              </button>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-container">

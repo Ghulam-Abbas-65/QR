@@ -43,6 +43,16 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await authService.register(userData);
+      // Don't set user here - wait for email verification
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const verifyEmail = async (email, code) => {
+    try {
+      const response = await authService.verifyEmail(email, code);
       setUser(response.user);
       setIsAuthenticated(true);
       return response;
@@ -78,6 +88,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     register,
+    verifyEmail,
     logout,
     updateProfile,
   };

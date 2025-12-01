@@ -36,6 +36,15 @@ class AuthService {
   async register(userData) {
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/register/`, userData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: 'Registration failed' };
+    }
+  }
+
+  async verifyEmail(email, code) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/verify-email/`, { email, code });
       
       if (response.data.token) {
         this.setAuthData(response.data.token, response.data.user);
@@ -43,7 +52,16 @@ class AuthService {
       
       return response.data;
     } catch (error) {
-      throw error.response?.data || { error: 'Registration failed' };
+      throw error.response?.data || { error: 'Verification failed' };
+    }
+  }
+
+  async resendVerification(email) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/resend-verification/`, { email });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: 'Failed to resend code' };
     }
   }
 
