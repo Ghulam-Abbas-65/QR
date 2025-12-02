@@ -98,7 +98,7 @@ function Home() {
     return (
       <div className="home-container">
         <button className="back-btn" onClick={() => setView('main')}>
-          ← Back
+          Back
         </button>
         
         <h2 className="view-title">Choose QR Code Type</h2>
@@ -131,7 +131,7 @@ function Home() {
     return (
       <div className="home-container">
         <button className="back-btn" onClick={() => setView('generate')}>
-          ← Back
+          Back
         </button>
         
         {error && <div className="error">{error}</div>}
@@ -165,7 +165,7 @@ function Home() {
     return (
       <div className="home-container">
         <button className="back-btn" onClick={() => setView('generate')}>
-          ← Back
+          Back
         </button>
         
         {error && <div className="error">{error}</div>}
@@ -203,7 +203,7 @@ function Home() {
     return (
       <div className="home-container">
         <button className="back-btn" onClick={() => setView('generate')}>
-          ← Back
+          Back
         </button>
         
         <h2 className="view-title">Dynamic QR Code Type</h2>
@@ -235,7 +235,7 @@ function Home() {
     return (
       <div className="home-container">
         <button className="back-btn" onClick={() => setView('dynamic')}>
-          ← Back
+          Back
         </button>
         
         {error && <div className="error">{error}</div>}
@@ -280,7 +280,7 @@ function Home() {
     return (
       <div className="home-container">
         <button className="back-btn" onClick={() => setView('dynamic')}>
-          ← Back
+          Back
         </button>
         
         {error && <div className="error">{error}</div>}
