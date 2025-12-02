@@ -41,11 +41,17 @@ class UploadedFile(models.Model):
         ordering = ['-uploaded_at']
 
 
+def generate_short_code():
+    """Generate a unique 8-character short code for dynamic QR"""
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+
+
 class QRCode(models.Model):
     """Store generated QR codes"""
     QR_TYPE_CHOICES = [
         ('url', 'URL'),
         ('file', 'File'),
+        ('dynamic', 'Dynamic'),
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='qr_codes')
@@ -59,10 +65,27 @@ class QRCode(models.Model):
         blank=True,
         related_name='qr_codes'
     )
+    # Dynamic QR fields
+    short_code = models.CharField(max_length=10, unique=True, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    name = models.CharField(max_length=100, blank=True)  # Optional name for easy identification
+    
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
+        if self.name:
+            return f"{self.name} ({self.qr_type})"
         return f"{self.qr_type} - {self.created_at}"
+    
+    def save(self, *args, **kwargs):
+        # Generate short_code for dynamic QR codes
+        if self.qr_type == 'dynamic' and not self.short_code:
+            self.short_code = generate_short_code()
+            # Ensure uniqueness
+            while QRCode.objects.filter(short_code=self.short_code).exists():
+                self.short_code = generate_short_code()
+        super().save(*args, **kwargs)
     
     class Meta:
         ordering = ['-created_at']

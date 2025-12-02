@@ -107,14 +107,152 @@ def qr_code_list_api(request):
         ).filter(
             Q(id__icontains=search) |
             Q(content__icontains=search) |
+            Q(name__icontains=search) |
             Q(uploaded_file__original_filename__icontains=search)
         ).select_related('uploaded_file').order_by('-created_at')[:20]
     else:
         qr_codes = QRCode.objects.filter(
             user=request.user
-        ).select_related('uploaded_file').order_by('-created_at')[:10]
+        ).select_related('uploaded_file').order_by('-created_at')[:20]
     
     return Response(QRCodeSerializer(qr_codes, many=True, context={'request': request}).data)
+
+
+@api_view(['POST'])
+def generate_dynamic_qr_api(request):
+    """API endpoint to generate dynamic QR code for URL"""
+    url = request.data.get('url', '')
+    name = request.data.get('name', '')
+    
+    if not url:
+        return Response({'error': 'URL is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Validate URL format
+    if not url.startswith(('http://', 'https://')):
+        return Response({'error': 'Invalid URL format'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Create dynamic QR code (short_code is auto-generated in model save)
+    qr_code = QRCode.objects.create(
+        user=request.user,
+        qr_type='dynamic',
+        content=url,
+        name=name,
+    )
+    
+    # Generate redirect URL
+    redirect_url = request.build_absolute_uri(
+        reverse('dynamic_redirect', kwargs={'short_code': qr_code.short_code})
+    )
+    
+    # Generate QR code image pointing to redirect URL
+    qr_image = create_qr_code(redirect_url)
+    qr_code.qr_image.save(
+        f'qr_dynamic_{qr_code.id}.png',
+        ContentFile(qr_image),
+        save=True
+    )
+    
+    return Response(
+        QRCodeSerializer(qr_code, context={'request': request}).data,
+        status=status.HTTP_201_CREATED
+    )
+
+
+@api_view(['POST'])
+def generate_dynamic_file_qr_api(request):
+    """API endpoint to generate dynamic QR code for file"""
+    if 'file' not in request.FILES:
+        return Response({'error': 'File is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    uploaded_file = request.FILES['file']
+    name = request.data.get('name', '')
+    
+    # Save the uploaded file
+    file_obj = UploadedFile.objects.create(
+        user=request.user,
+        file=uploaded_file,
+        original_filename=uploaded_file.name
+    )
+    
+    # Create download URL
+    download_url = request.build_absolute_uri(
+        reverse('download_file', kwargs={'token': file_obj.token})
+    )
+    
+    # Create dynamic QR code
+    qr_code = QRCode.objects.create(
+        user=request.user,
+        qr_type='dynamic',
+        content=download_url,
+        name=name,
+        uploaded_file=file_obj,
+    )
+    
+    # Generate redirect URL
+    redirect_url = request.build_absolute_uri(
+        reverse('dynamic_redirect', kwargs={'short_code': qr_code.short_code})
+    )
+    
+    # Generate QR code image
+    qr_image = create_qr_code(redirect_url)
+    qr_code.qr_image.save(
+        f'qr_dynamic_{qr_code.id}.png',
+        ContentFile(qr_image),
+        save=True
+    )
+    
+    return Response(
+        QRCodeSerializer(qr_code, context={'request': request}).data,
+        status=status.HTTP_201_CREATED
+    )
+
+
+@api_view(['PUT', 'POST'])
+def update_dynamic_qr_api(request, qr_id):
+    """Update dynamic QR code destination (URL or File)"""
+    qr_code = get_object_or_404(QRCode, id=qr_id, user=request.user, qr_type='dynamic')
+    
+    url = request.data.get('url')
+    name = request.data.get('name')
+    is_active = request.data.get('is_active')
+    
+    # Handle URL update
+    if url:
+        if not url.startswith(('http://', 'https://')):
+            return Response({'error': 'Invalid URL format'}, status=status.HTTP_400_BAD_REQUEST)
+        qr_code.content = url
+        qr_code.uploaded_file = None  # Clear file reference if switching to URL
+    
+    # Handle file replacement
+    if 'file' in request.FILES:
+        uploaded_file = request.FILES['file']
+        
+        # Create new file
+        file_obj = UploadedFile.objects.create(
+            user=request.user,
+            file=uploaded_file,
+            original_filename=uploaded_file.name
+        )
+        
+        # Update QR code to point to new file
+        download_url = request.build_absolute_uri(
+            reverse('download_file', kwargs={'token': file_obj.token})
+        )
+        qr_code.content = download_url
+        qr_code.uploaded_file = file_obj
+    
+    if name is not None:
+        qr_code.name = name
+    
+    if is_active is not None:
+        qr_code.is_active = is_active
+    
+    qr_code.save()
+    
+    return Response({
+        'message': 'QR code updated successfully',
+        'qr_code': QRCodeSerializer(qr_code, context={'request': request}).data
+    })
 
 
 @api_view(['GET'])

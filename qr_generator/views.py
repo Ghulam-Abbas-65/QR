@@ -123,6 +123,21 @@ def download_file(request, token):
         raise Http404("File not found")
 
 
+def dynamic_redirect(request, short_code):
+    """Redirect dynamic QR code to its current destination"""
+    qr_code = get_object_or_404(QRCode, short_code=short_code, qr_type='dynamic')
+    
+    # Check if QR code is active
+    if not qr_code.is_active:
+        raise Http404("This QR code is no longer active")
+    
+    # Track the scan
+    track_scan(request, qr_code)
+    
+    # Redirect to the current destination
+    return redirect(qr_code.content)
+
+
 def track_scan(request, qr_code):
     """Track analytics for QR code scan"""
     # Get client information

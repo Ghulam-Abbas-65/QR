@@ -58,4 +58,27 @@ export const getAnalytics = async (id, filters = {}) => {
   return response.data;
 };
 
+export const generateDynamicQR = async (url, name = '') => {
+  const response = await api.post('/generate/dynamic/', { url, name });
+  return response.data;
+};
+
+export const generateDynamicFileQR = async (file, name = '') => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('name', name);
+  
+  const response = await api.post('/generate/dynamic-file/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const updateDynamicQR = async (id, data) => {
+  const response = await api.put(`/qr-codes/${id}/update/`, data);
+  return response.data;
+};
+
 export default api;
