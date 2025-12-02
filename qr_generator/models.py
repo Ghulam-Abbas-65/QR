@@ -79,6 +79,15 @@ class QRCode(models.Model):
         return f"{self.qr_type} - {self.created_at}"
     
     def save(self, *args, **kwargs):
+        # Generate short_code for ALL QR codes (for tracking)
+        if not self.short_code:
+            self.short_code = generate_short_code()
+            # Ensure uniqueness
+            while QRCode.objects.filter(short_code=self.short_code).exists():
+                self.short_code = generate_short_code()
+        super().save(*args, **kwargs)
+    
+    def save(self, *args, **kwargs):
         # Generate short_code for dynamic QR codes
         if self.qr_type == 'dynamic' and not self.short_code:
             self.short_code = generate_short_code()

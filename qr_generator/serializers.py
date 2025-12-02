@@ -32,8 +32,8 @@ class QRCodeSerializer(serializers.ModelSerializer):
         return obj.qr_image.url if obj.qr_image else None
     
     def get_redirect_url(self, obj):
-        """Return the redirect URL for dynamic QR codes"""
-        if obj.qr_type == 'dynamic' and obj.short_code:
+        """Return the redirect URL for ALL QR codes (for tracking)"""
+        if obj.short_code:
             request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(f'/r/{obj.short_code}/')

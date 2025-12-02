@@ -21,15 +21,20 @@ def generate_url_qr_api(request):
     if serializer.is_valid():
         url = serializer.validated_data['url']
         
-        # Generate QR code
-        qr_image = create_qr_code(url)
-        
-        # Save to database
+        # Save to database first (to get short_code)
         qr_code = QRCode.objects.create(
             user=request.user,
             qr_type='url',
             content=url,
         )
+        
+        # Generate redirect URL for tracking
+        redirect_url = request.build_absolute_uri(
+            reverse('dynamic_redirect', kwargs={'short_code': qr_code.short_code})
+        )
+        
+        # Generate QR code pointing to redirect URL
+        qr_image = create_qr_code(redirect_url)
         qr_code.qr_image.save(
             f'qr_{qr_code.id}.png',
             ContentFile(qr_image),
@@ -64,16 +69,21 @@ def generate_file_qr_api(request):
             reverse('download_file', kwargs={'token': file_obj.token})
         )
         
-        # Generate QR code with the secure URL
-        qr_image = create_qr_code(download_url)
-        
-        # Save QR code to database
+        # Save QR code to database first (to get short_code)
         qr_code = QRCode.objects.create(
             user=request.user,
             qr_type='file',
             content=download_url,
             uploaded_file=file_obj
         )
+        
+        # Generate redirect URL for tracking
+        redirect_url = request.build_absolute_uri(
+            reverse('dynamic_redirect', kwargs={'short_code': qr_code.short_code})
+        )
+        
+        # Generate QR code pointing to redirect URL
+        qr_image = create_qr_code(redirect_url)
         qr_code.qr_image.save(
             f'qr_{qr_code.id}.png',
             ContentFile(qr_image),

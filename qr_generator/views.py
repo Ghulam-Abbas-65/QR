@@ -103,15 +103,11 @@ def qr_result(request, qr_id):
 
 
 def download_file(request, token):
-    """Download file using secure token and track analytics"""
+    """Download file using secure token"""
     uploaded_file = get_object_or_404(UploadedFile, token=token)
     
-    # Get the QR code associated with this file
-    qr_code = uploaded_file.qr_codes.first()
-    
-    if qr_code:
-        # Track the scan
-        track_scan(request, qr_code)
+    # Note: Tracking is now done in dynamic_redirect view
+    # This endpoint is called after redirect, so no duplicate tracking
     
     try:
         return FileResponse(
@@ -124,17 +120,21 @@ def download_file(request, token):
 
 
 def dynamic_redirect(request, short_code):
-    """Redirect dynamic QR code to its current destination"""
-    qr_code = get_object_or_404(QRCode, short_code=short_code, qr_type='dynamic')
+    """Redirect ANY QR code to its destination and track scan"""
+    qr_code = get_object_or_404(QRCode, short_code=short_code)
     
-    # Check if QR code is active
-    if not qr_code.is_active:
+    # Check if QR code is active (for dynamic QR codes)
+    if qr_code.qr_type == 'dynamic' and not qr_code.is_active:
         raise Http404("This QR code is no longer active")
     
-    # Track the scan
+    # Track the scan for ALL QR types
     track_scan(request, qr_code)
     
-    # Redirect to the current destination
+    # For file QR codes, redirect to download
+    if qr_code.qr_type == 'file' and qr_code.uploaded_file:
+        return redirect('download_file', token=qr_code.uploaded_file.token)
+    
+    # For URL and dynamic QR codes, redirect to content
     return redirect(qr_code.content)
 
 
