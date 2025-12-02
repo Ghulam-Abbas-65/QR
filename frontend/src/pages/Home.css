@@ -1,0 +1,162 @@
+.home-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Main Buttons */
+.main-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
+  margin-top: 40px;
+}
+
+.main-btn {
+  background: white;
+  border: none;
+  border-radius: 16px;
+  padding: 40px 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 15px;
+}
+
+.main-btn:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.generate-btn:hover {
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+}
+
+.analytics-btn:hover {
+  background: linear-gradient(135deg, #11998e15 0%, #38ef7d15 100%);
+}
+
+.btn-icon {
+  font-size: 48px;
+}
+
+.btn-text {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+}
+
+.btn-desc {
+  font-size: 14px;
+  color: #666;
+}
+
+/* Back Button */
+.back-btn {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 30px;
+  transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* View Title */
+.view-title {
+  color: white;
+  font-size: 28px;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* Option Buttons */
+.option-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 25px;
+}
+
+.option-btn {
+  background: white;
+  border: none;
+  border-radius: 12px;
+  padding: 35px 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.option-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%);
+}
+
+.option-icon {
+  font-size: 40px;
+}
+
+.option-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.option-desc {
+  font-size: 13px;
+  color: #666;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .main-buttons,
+  .option-buttons {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .main-btn {
+    padding: 30px 20px;
+  }
+
+  .btn-icon {
+    font-size: 40px;
+  }
+
+  .btn-text {
+    font-size: 20px;
+  }
+
+  .option-btn {
+    padding: 25px 20px;
+  }
+
+  .option-icon {
+    font-size: 32px;
+  }
+
+  .option-text {
+    font-size: 18px;
+  }
+
+  .view-title {
+    font-size: 24px;
+  }
+}
