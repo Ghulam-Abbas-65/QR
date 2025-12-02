@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getAnalytics } from '../services/api';
 import './Analytics.css';
@@ -201,7 +201,6 @@ function Analytics() {
       <DataSection title="🏙️ Cities" data={stats.cities} labelKey="city" countryKey="country" />
       <DataSection title="📱 Device Types" data={stats.devices} labelKey="device_type" />
       <DataSection title="🌐 Browsers" data={stats.browsers} labelKey="browser" />
-      <DataSection title="🕐 Scans by Hour" data={stats.hourly_distribution} labelKey="hour" hourFormat />
 
       {/* Recent Scans */}
       <div className="analytics-section">
@@ -228,23 +227,19 @@ function Analytics() {
         </div>
       </div>
 
-      <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-        <Link
-          to={`/result/${id}`}
-          className="btn btn-secondary"
-          style={{ width: 'auto', display: 'inline-block' }}
-        >
-          Back to QR Code
+      <div className="analytics-nav">
+        <Link to={`/result/${id}`} className="btn btn-secondary">
+          ← Back to QR Code
         </Link>
-        <Link to="/" className="btn btn-secondary" style={{ width: 'auto', display: 'inline-block' }}>
-          Home
+        <Link to="/" className="btn btn-secondary">
+          🏠 Home
         </Link>
       </div>
     </div>
   );
 }
 
-function DataSection({ title, data, labelKey, countryKey, hourFormat }) {
+function DataSection({ title, data, labelKey, countryKey }) {
   return (
     <div className="analytics-section">
       <h3>
@@ -255,7 +250,7 @@ function DataSection({ title, data, labelKey, countryKey, hourFormat }) {
           data.map((item, index) => (
             <div key={index} className="data-item">
               <span className="data-label">
-                {hourFormat ? `${item[labelKey]}:00` : item[labelKey]}
+                {item[labelKey]}
                 {countryKey && `, ${item[countryKey]}`}
               </span>
               <span className="data-value">{item.count}</span>
