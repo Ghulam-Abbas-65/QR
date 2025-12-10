@@ -46,6 +46,22 @@ def generate_short_code():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=8))
 
 
+class Project(models.Model):
+    """Projects to organize QR codes"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.name} ({self.user.username})"
+    
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['user', 'name']  # User can't have duplicate project names
+
+
 class QRCode(models.Model):
     """Store generated QR codes"""
     QR_TYPE_CHOICES = [
@@ -55,9 +71,10 @@ class QRCode(models.Model):
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='qr_codes')
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='qr_codes', null=True, blank=True)
     qr_type = models.CharField(max_length=10, choices=QR_TYPE_CHOICES)
     content = models.TextField()  # URL or file token
-    qr_image = models.ImageField(upload_to='qr_codes/')
+    qr_image = models.ImageField(upload_to='qr_codes/', null=True, blank=True)
     uploaded_file = models.ForeignKey(
         UploadedFile, 
         on_delete=models.CASCADE, 
@@ -89,6 +106,60 @@ class QRCode(models.Model):
     
     class Meta:
         ordering = ['-created_at']
+
+
+class QRCustomization(models.Model):
+    """QR code customization options"""
+    qr = models.OneToOneField(QRCode, on_delete=models.CASCADE, related_name="customization")
+    
+    color = models.CharField(max_length=10, null=True, blank=True)  # hex color
+    size = models.CharField(
+        max_length=10,
+        choices=[("small", "Small"), ("medium", "Medium"), ("large", "Large")],
+        null=True,
+        blank=True
+    )
+    
+    def __str__(self):
+        return f"Customization for {self.qr}"
+
+
+class QRAdvancedOptions(models.Model):
+    """Advanced options for QR codes"""
+    qr = models.OneToOneField(QRCode, on_delete=models.CASCADE, related_name="advanced")
+    
+    password_protection = models.CharField(max_length=255, null=True, blank=True)
+    expiry_date = models.DateTimeField(null=True, blank=True)
+    use_short_url = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"Advanced options for {self.qr}"
+
+
+class QRUTMParameters(models.Model):
+    """UTM tracking parameters for QR codes"""
+    qr = models.OneToOneField(QRCode, on_delete=models.CASCADE, related_name="utm")
+    
+    utm_source = models.CharField(max_length=255, null=True, blank=True)
+    utm_medium = models.CharField(max_length=255, null=True, blank=True)
+    utm_campaign = models.CharField(max_length=255, null=True, blank=True)
+    utm_term = models.CharField(max_length=255, null=True, blank=True)
+    utm_content = models.CharField(max_length=255, null=True, blank=True)
+    
+    def __str__(self):
+        return f"UTM parameters for {self.qr}"
+
+
+class QRDeviceRedirects(models.Model):
+    """Device-based redirect URLs for dynamic QR codes"""
+    qr = models.OneToOneField(QRCode, on_delete=models.CASCADE, related_name="device_redirects")
+    
+    mobile_url = models.URLField(null=True, blank=True)
+    desktop_url = models.URLField(null=True, blank=True)
+    default_url = models.URLField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"Device redirects for {self.qr}"
 
 
 class ScanAnalytics(models.Model):

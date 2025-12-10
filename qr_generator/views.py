@@ -7,7 +7,7 @@ from django.http import FileResponse, Http404
 from django.urls import reverse
 from django.contrib import messages
 from django.db.models import Q
-from .models import UploadedFile, QRCode, ScanAnalytics
+from .models import UploadedFile, QRCode, ScanAnalytics, QRCustomization, QRDeviceRedirects, QRUTMParameters
 from .forms import URLQRForm, FileQRForm
 from .analytics import get_client_ip, get_location_from_ip, get_device_info, get_referrer
 
@@ -134,8 +134,106 @@ def dynamic_redirect(request, short_code):
     if qr_code.qr_type == 'file' and qr_code.uploaded_file:
         return redirect('download_file', token=qr_code.uploaded_file.token)
     
-    # For URL and dynamic QR codes, redirect to content
-    return redirect(qr_code.content)
+    # For dynamic QR codes, handle device-based redirects
+    if qr_code.qr_type == 'dynamic':
+        redirect_url = None
+        
+        # Check for device-based redirects
+        try:
+            device_redirects = qr_code.device_redirects
+            user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+            
+            # Detect mobile device
+            is_mobile = any(mobile in user_agent for mobile in [
+                'mobile', 'android', 'iphone', 'ipad', 'ipod', 
+                'blackberry', 'windows phone', 'opera mini'
+            ])
+            
+            # Select URL based on device
+            if is_mobile and device_redirects.mobile_url:
+                redirect_url = device_redirects.mobile_url
+            elif not is_mobile and device_redirects.desktop_url:
+                redirect_url = device_redirects.desktop_url
+            elif device_redirects.default_url:
+                redirect_url = device_redirects.default_url
+            
+        except QRDeviceRedirects.DoesNotExist:
+            pass
+        
+        # Fallback to content if no device redirects
+        if not redirect_url:
+            redirect_url = qr_code.content
+        
+        # Apply UTM parameters if present
+        try:
+            utm_params = qr_code.utm
+            if utm_params:
+                from urllib.parse import urlencode, urlparse, urlunparse, parse_qs
+                
+                # Parse existing URL
+                parsed = urlparse(redirect_url)
+                existing_params = parse_qs(parsed.query)
+                
+                # Add UTM parameters
+                utm_data = {
+                    'utm_source': utm_params.utm_source,
+                    'utm_medium': utm_params.utm_medium,
+                    'utm_campaign': utm_params.utm_campaign,
+                    'utm_term': utm_params.utm_term,
+                    'utm_content': utm_params.utm_content,
+                }
+                
+                # Filter out None values and merge with existing params
+                for key, value in utm_data.items():
+                    if value:
+                        existing_params[key] = [value]
+                
+                # Rebuild URL with UTM parameters
+                new_query = urlencode(existing_params, doseq=True)
+                redirect_url = urlunparse((
+                    parsed.scheme, parsed.netloc, parsed.path,
+                    parsed.params, new_query, parsed.fragment
+                ))
+        except QRUTMParameters.DoesNotExist:
+            pass
+        
+        return redirect(redirect_url)
+    
+    # For URL QR codes, apply UTM parameters if present
+    redirect_url = qr_code.content
+    try:
+        utm_params = qr_code.utm
+        if utm_params:
+            from urllib.parse import urlencode, urlparse, urlunparse, parse_qs
+            
+            # Parse existing URL
+            parsed = urlparse(redirect_url)
+            existing_params = parse_qs(parsed.query)
+            
+            # Add UTM parameters
+            utm_data = {
+                'utm_source': utm_params.utm_source,
+                'utm_medium': utm_params.utm_medium,
+                'utm_campaign': utm_params.utm_campaign,
+                'utm_term': utm_params.utm_term,
+                'utm_content': utm_params.utm_content,
+            }
+            
+            # Filter out None values and merge with existing params
+            for key, value in utm_data.items():
+                if value:
+                    existing_params[key] = [value]
+            
+            # Rebuild URL with UTM parameters
+            new_query = urlencode(existing_params, doseq=True)
+            redirect_url = urlunparse((
+                parsed.scheme, parsed.netloc, parsed.path,
+                parsed.params, new_query, parsed.fragment
+            ))
+    except QRUTMParameters.DoesNotExist:
+        pass
+    
+    return redirect(redirect_url)
 
 
 def track_scan(request, qr_code):
@@ -164,8 +262,28 @@ def track_scan(request, qr_code):
     )
 
 
-def create_qr_code(data):
-    """Helper function to generate QR code image"""
+def create_qr_code(data, qr_code_obj=None):
+    """Helper function to generate QR code image with optional customization"""
+    # Get customization options if QR code object is provided
+    size_map = {
+        "small": 200,
+        "medium": 300,
+        "large": 400
+    }
+    
+    size = 300  # default
+    fill_color = "black"
+    
+    if qr_code_obj:
+        try:
+            customization = qr_code_obj.customization
+            if customization.size:
+                size = size_map.get(customization.size, 300)
+            if customization.color:
+                fill_color = customization.color
+        except (QRCustomization.DoesNotExist, AttributeError):
+            pass
+    
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -175,7 +293,15 @@ def create_qr_code(data):
     qr.add_data(data)
     qr.make(fit=True)
     
-    img = qr.make_image(fill_color="black", back_color="white")
+    img = qr.make_image(fill_color=fill_color, back_color="white")
+    
+    # Resize if custom size is specified
+    if qr_code_obj:
+        try:
+            if qr_code_obj.customization.size:
+                img = img.resize((size, size))
+        except (QRCustomization.DoesNotExist, AttributeError):
+            pass
     
     # Convert to bytes
     buffer = BytesIO()
