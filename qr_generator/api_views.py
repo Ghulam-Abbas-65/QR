@@ -305,24 +305,6 @@ def generate_file_qr_api(request):
         )
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Generate redirect URL for tracking
-        redirect_url = request.build_absolute_uri(
-            reverse('dynamic_redirect', kwargs={'short_code': qr_code.short_code})
-        )
-        
-        # Generate QR code pointing to redirect URL
-        qr_image = create_qr_code(redirect_url)
-        qr_code.qr_image.save(
-            f'qr_{qr_code.id}.png',
-            ContentFile(qr_image),
-            save=True
-        )
-        
-        return Response(
-            QRCodeSerializer(qr_code, context={'request': request}).data,
-            status=status.HTTP_201_CREATED
-        )
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
