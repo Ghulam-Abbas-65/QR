@@ -168,3 +168,51 @@ class RecentScanSerializer(serializers.ModelSerializer):
     def get_time(self, obj):
         """Format time as 'H:MM am/pm' (e.g., '5:45 am')"""
         return obj.scanned_at.strftime('%I:%M %p').lower()
+
+
+class TopPerformingQRSerializer(serializers.ModelSerializer):
+    """Serializer for top performing QR codes"""
+    project_name = serializers.SerializerMethodField()
+    qr_name = serializers.SerializerMethodField()
+    total_scans = serializers.SerializerMethodField()
+    unique_scans = serializers.SerializerMethodField()
+    last_scan_date = serializers.SerializerMethodField()
+    qr_image = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = QRCode
+        fields = [
+            'id', 'project_name', 'qr_name', 'qr_type', 
+            'total_scans', 'unique_scans', 'last_scan_date',
+            'created_at', 'qr_image', 'is_active'
+        ]
+    
+    def get_project_name(self, obj):
+        """Get project name from QR code"""
+        return obj.project.name if obj.project else 'No Project'
+    
+    def get_qr_name(self, obj):
+        """Get QR code name"""
+        return obj.name if obj.name else f"QR {obj.id}"
+    
+    def get_total_scans(self, obj):
+        """Get total scan count"""
+        return obj.scans.count()
+    
+    def get_unique_scans(self, obj):
+        """Get unique scan count (unique users)"""
+        return obj.scans.values('user_identifier').distinct().count()
+    
+    def get_last_scan_date(self, obj):
+        """Get last scan date"""
+        last_scan = obj.scans.order_by('-scanned_at').first()
+        if last_scan:
+            return last_scan.scanned_at.strftime('%Y-%m-%d')
+        return None
+    
+    def get_qr_image(self, obj):
+        """Get QR code image URL"""
+        request = self.context.get('request')
+        if obj.qr_image and request:
+            return request.build_absolute_uri(obj.qr_image.url)
+        return obj.qr_image.url if obj.qr_image else None

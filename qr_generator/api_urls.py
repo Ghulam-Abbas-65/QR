@@ -8,6 +8,16 @@ urlpatterns = [
     # Dashboard endpoint
     path('dashboard/overview/', api_views.dashboard_overview_api, name='api_dashboard_overview'),
     path('dashboard/recent-scans/', api_views.recent_scans_api, name='api_recent_scans'),
+    path('dashboard/top-performing/', api_views.top_performing_qr_api, name='api_top_performing_qr'),
+    path('dashboard/scan-trends/daily/', api_views.scan_trends_daily_api, name='api_scan_trends_daily'),
+    path('dashboard/scan-trends/weekly/', api_views.scan_trends_weekly_api, name='api_scan_trends_weekly'),
+    path('dashboard/scan-trends/annually/', api_views.scan_trends_annually_api, name='api_scan_trends_annually'),
+    path('dashboard/geography/', api_views.geography_analytics_api, name='api_geography_analytics'),
+    path('dashboard/scans-by-countries/', api_views.scans_by_countries_api, name='api_scans_by_countries'),
+    path('dashboard/country-performance/', api_views.country_performance_details_api, name='api_country_performance'),
+    path('dashboard/devices/', api_views.devices_analytics_api, name='api_devices_analytics'),
+    path('dashboard/device-type-distribution/', api_views.device_type_distribution_api, name='api_device_type_distribution'),
+    path('dashboard/utm-performance/', api_views.utm_performance_api, name='api_utm_performance'),
     
     # Project management endpoints
     path('projects/', api_views.list_projects_api, name='api_projects_list'),
